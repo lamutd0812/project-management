@@ -1,0 +1,62 @@
+version: '3'
+services:
+  #   app:
+  #     container_name: nest-sql-api
+  #     image: nest-sql:v1
+  #     build: .
+  #     ports:
+  #       - '3001:3001'
+  #     restart: unless-stopped
+  #     depends_on:
+  #       - db
+  #       - redis
+  #     networks:
+  #       - user_network
+  #     volumes:
+  #       - ./config:/app/config
+
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   ports:
+  #     - 15672:15672
+  #     - 5672:5672
+  #   environment:
+  #     RABBITMQ_DEFAULT_PASS: password
+  #     RABBITMQ_DEFAULT_USER: user
+  #     RABBITMQ_DEFAULT_VHOST: '/'
+  #   networks:
+  #     - user_network
+
+  # redis:
+  #   image: redis:latest
+  #   container_name: redis
+  #   ports:
+  #     - 6380:6380
+  #   volumes:
+  #     - ./redis_data:/data
+  #   restart: always
+  #   networks:
+  #     - user_network
+
+  db:
+    image: postgres:14.1-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: project-management-dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123@456aA
+    ports:
+      - '5432:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - user_network
+
+volumes:
+  db:
+
+networks:
+  user_network:
+    name: user_network
+    driver: bridge

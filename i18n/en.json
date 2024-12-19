@@ -1,0 +1,10 @@
+{
+  "not_found": "Not found",
+  "property_invalid": "{{property}} invalid",
+  "property_not_exist": "{{property}} isn't existed",
+  "property1_must_be_property2": "{{property1}} must be {{property2}}",
+  "property_was_exist": "{{property}} was existed",
+  "time_expired": "Time expired",
+  "success": "Success",
+  "your_must_be_supper_admin": "You must be supper_admin"
+}

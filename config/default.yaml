@@ -1,0 +1,22 @@
+node_env: local
+server:
+  host: 127.0.0.1
+  hostname: 127.0.0.1:3000
+  swaggerSchema: http
+  port: 3000
+
+service:
+  baseUrl: api
+  baseApi: api
+  docsBaseUrl: api/docs
+  apiVersion: 1.0
+
+db:
+  host: localhost
+  port: 5432
+  username: postgres
+  password: 123@456aA
+  name: project-management-dev
+
+rabbitmq:
+  url: amqp://user:password@localhost:5672

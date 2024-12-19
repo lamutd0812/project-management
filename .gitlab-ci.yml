@@ -1,0 +1,109 @@
+image: docker/compose:alpine-1.27.4
+
+services:
+  - docker:19.03.13-dind
+
+# cache in top level, apply for all jobs of all stages
+cache:
+  key: ${CI_COMMIT_REF_SLUG} # this cache only apply for current branch
+  paths:
+  - node_modules/
+
+stages:
+  - build
+  - test
+  - release
+  - deploy
+
+before_script:
+  - docker version
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+build:
+  stage: build
+  only:
+    - develop
+    - master
+  script: 
+    - docker pull $CI_REGISTRY_IMAGE:latest || true
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest
+      --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      --tag $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+test:
+  stage: test
+  only:
+    - develop
+    - master
+  before_script:
+    - apk add --no-cache py3-pip py3-setuptools python3 python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - docker-compose version
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+  variables:
+    NODE_APP_PRODUCTION_MODE: $NODE_APP_PRODUCTION_MODE
+    NODE_APP_SERVER_ADDRESS: $NODE_APP_SERVER_ADDRESS
+    NODE_APP_PORT: $NODE_APP_PORT
+    NODE_APP_DB_TYPE: $NODE_APP_DB_TYPE
+    NODE_APP_DB_HOST: $NODE_APP_DB_HOST
+    NODE_APP_DB_PORT: $NODE_APP_DB_PORT
+    NODE_APP_DB_USERNAME: $NODE_APP_DB_USERNAME
+    NODE_APP_DB_PASSWORD: $NODE_APP_DB_PASSWORD
+    NODE_APP_DB_DATABASE: $NODE_APP_DB_DATABASE
+    REDIS_HOST: $REDIS_HOST
+    REDIS_PORT: $REDIS_PORT
+    JWT_SECRET_KEY: $JWT_SECRET_KEY
+    JWT_EXPIRES_IN: $JWT_EXPIRES_IN 
+  script:
+    - touch .env
+    - docker-compose up -d
+    - sleep 15
+    - docker-compose exec -T app npm run lint
+  
+release-latest:
+  variables:
+    GIT_STRATEGY: none
+  stage: release
+  only:
+    - develop
+    - master
+  script:
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+deploy:
+  stage: deploy
+  rules: 
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "production"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: manual
+    - when: never
+  variables:
+    GIT_STRATEGY: none
+  # only:
+  #   - master 
+  before_script:
+    - apk update && apk add openssh-client bash
+  script:
+    - eval $(ssh-agent -s)
+    - bash -c 'ssh-add <(echo "$SSH_PRIVATE_KEY")'
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -H $SSH_SERVER_IP >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    
+    - echo "$SSH_USER"
+    - echo "$SSH_SERVER_IP"
+
+    - >
+      ssh $SSH_USER@$SSH_SERVER_IP
+      "docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY};
+      cd ${PATH_TO_PROJECT};
+      docker-compose down;
+      docker pull ${CI_REGISTRY_IMAGE}:latest;
+      docker-compose up -d;
+      docker image prune -f;"

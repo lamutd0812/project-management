@@ -1,0 +1,11 @@
+#redis
+
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+dist
+.git
+.docker
+redis_data
