@@ -1,7 +1,9 @@
 import { BaseSoftDeleteEntity } from '@configuration/base-entity';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@common/enums/common.enum';
+import { TeamMember } from 'src/modules/teams/entities/team-member.entity';
+import { Task } from 'src/modules/tasks/entities/task.entity';
 
 @Entity('users')
 export class User extends BaseSoftDeleteEntity {
@@ -41,4 +43,11 @@ export class User extends BaseSoftDeleteEntity {
     const hash = await bcrypt.hash(password, this.salt);
     return hash === this.password;
   }
+
+  // relations
+  @OneToMany(() => Task, (task) => task.asignee, { eager: false })
+  tasks: Task[];
+
+  @OneToMany(() => TeamMember, (tm) => tm.user, { eager: false })
+  teamMembers: TeamMember[];
 }

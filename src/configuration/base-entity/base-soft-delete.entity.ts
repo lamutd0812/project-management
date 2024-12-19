@@ -7,9 +7,4 @@ export abstract class BaseSoftDeleteEntity extends BaseColumnEntity {
   @DeleteDateColumn({ name: 'deleted_at', type: TIMESTAMP_TYPE })
   @IsDate()
   deletedAt?: Date;
-
-  async softDelete() {
-    this.deletedAt = new Date();
-    await this.save();
-  }
 }
