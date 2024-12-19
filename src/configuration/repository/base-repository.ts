@@ -9,8 +9,8 @@ import { NOT_FOUND } from '@common/constants/error-messages';
 import { SortType } from '@common/enums/common.enum';
 
 export class BaseRepository<T extends ObjectLiteral> extends Repository<T> {
-  constructor(type: EntityTarget<T>, dataSource: DataSource) {
-    super(type, dataSource.createEntityManager());
+  constructor(entity: EntityTarget<T>, dataSource: DataSource) {
+    super(entity, dataSource.createEntityManager());
   }
 
   findOneByCondition(

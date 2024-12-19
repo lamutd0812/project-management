@@ -37,3 +37,5 @@ export enum Role {
   MANAGER = 'Manager',
   CONTRIBUTOR = 'Contributor',
 }
+
+export const ROLES_KEY = 'roles';

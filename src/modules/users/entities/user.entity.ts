@@ -4,8 +4,8 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@common/enums/common.enum';
 
 @Entity('users')
-export class Users extends BaseSoftDeleteEntity {
-  @Column({ type: 'varchar', length: 255, nullable: false })
+export class User extends BaseSoftDeleteEntity {
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
   username: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
@@ -14,7 +14,7 @@ export class Users extends BaseSoftDeleteEntity {
   @Column({ type: 'varchar', length: 255, nullable: false })
   salt: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
   email: string;
 
   @Column({ name: 'first_name', type: 'varchar', length: 255, nullable: false })

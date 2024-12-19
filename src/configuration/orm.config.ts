@@ -12,7 +12,7 @@ const ormConfig: TypeOrmModuleOptions = {
   username: envConfig.DB_USERNAME,
   password: envConfig.DB_PASSWORD,
   database: envConfig.DB_NAME,
-  synchronize: false,
+  synchronize: true,
   logging: false,
   entities: [
     __dirname + '/../**/**/**/*.entity.js',

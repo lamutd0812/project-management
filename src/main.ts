@@ -16,6 +16,7 @@ import { AppModule } from './app.module';
 import * as i18n from 'i18n';
 import { customOptions, swaggerConfig } from '@configuration/swagger.config';
 import { AllExceptionsFilter } from './filters';
+import { UsersService } from './modules/users/users.service';
 
 async function initializeApp(app: INestApplication) {
   app.enableCors({
@@ -55,6 +56,8 @@ async function bootstrap() {
     appOptions,
   );
 
+  const usersService = app.get<UsersService>(UsersService);
+
   app.get<IConfig>(CONFIG);
 
   await initializeApp(app);
@@ -74,6 +77,7 @@ async function bootstrap() {
   await app.listen(envConfig.PORT);
   try {
     // do something
+    await usersService.generateAdmin();
   } catch (error) {
     console.error(`Failed to initialize, due to ${error}`);
     process.exit(1);

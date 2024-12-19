@@ -19,4 +19,12 @@ export const envConfig = {
   DB_USERNAME: config.get<string>('db.username'),
   DB_PASSWORD: config.get<string>('db.password'),
   DB_NAME: config.get<string>('db.name'),
+
+  // jwt
+  JWT_SECRET_KEY: config.get<string>('jwt.secret'),
+  JWT_EXPIRES_IN: config.get<string>('jwt.expTime'),
+
+  // admin
+  ADMIN_USERNAME: config.get<string>('admin.username'),
+  ADMIN_PASSWORD: config.get<string>('admin.password'),
 };

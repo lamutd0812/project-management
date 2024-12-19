@@ -1,30 +1,30 @@
-import { TIMESTAMP_TYPE } from "@common/constants/constant";
-import { IsDate } from "class-validator";
+import { TIMESTAMP_TYPE } from '@common/constants/constant';
+import { IsDate } from 'class-validator';
 import {
   Column,
   CreateDateColumn,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   BaseEntity as TypeORMBaseEntity,
-} from "typeorm";
+} from 'typeorm';
 
 export abstract class BaseColumnEntity extends TypeORMBaseEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({
-    name: "created_at",
+    name: 'created_at',
     type: TIMESTAMP_TYPE,
-    default: () => "CURRENT_TIMESTAMP",
+    default: () => 'CURRENT_TIMESTAMP',
   })
   @CreateDateColumn({ type: TIMESTAMP_TYPE })
   @IsDate()
   createdAt: Date;
 
   @Column({
-    name: "updated_at",
+    name: 'updated_at',
     type: TIMESTAMP_TYPE,
-    default: () => "CURRENT_TIMESTAMP",
+    default: () => 'CURRENT_TIMESTAMP',
   })
   @UpdateDateColumn({ type: TIMESTAMP_TYPE })
   @IsDate()

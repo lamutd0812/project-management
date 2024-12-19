@@ -18,5 +18,13 @@ db:
   password: 123@456aA
   name: project-management-dev
 
+jwt:
+  secret: superjwts3cr3tkEy
+  expTime: 86400
+
+admin:
+  username: admin
+  password: P@ssW0rD@1
+
 rabbitmq:
   url: amqp://user:password@localhost:5672
