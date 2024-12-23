@@ -79,6 +79,7 @@ export class ProjectsController {
   }
 
   @Delete(':projectId')
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Delete project' })
   @ApiOkResponse({ type: CommonResponseDto })
   deleteProject(

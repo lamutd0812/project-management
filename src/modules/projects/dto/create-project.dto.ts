@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsString, MaxLength } from 'class-validator';
+import {
+  ArrayMinSize,
+  ArrayUnique,
+  IsArray,
+  IsDateString,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateProjectDto {
   @ApiProperty()
@@ -15,4 +23,11 @@ export class CreateProjectDto {
   @ApiProperty()
   @IsDateString()
   dueDate: Date;
+
+  @ApiProperty()
+  @IsArray()
+  @ArrayUnique()
+  @IsUUID(undefined, { each: true })
+  @ArrayMinSize(1)
+  teamMemberIds: string[];
 }
