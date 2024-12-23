@@ -2,8 +2,8 @@ import { BaseSoftDeleteEntity } from '@configuration/base-entity';
 import { Column, Entity, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@common/enums/common.enum';
-import { TeamMember } from 'src/modules/teams/entities/team-member.entity';
 import { Task } from 'src/modules/tasks/entities/task.entity';
+import { ProjectMember } from 'src/modules/projects/entities/project-member.entity';
 
 @Entity('users')
 export class User extends BaseSoftDeleteEntity {
@@ -48,6 +48,6 @@ export class User extends BaseSoftDeleteEntity {
   @OneToMany(() => Task, (task) => task.asignee, { eager: false })
   tasks: Task[];
 
-  @OneToMany(() => TeamMember, (tm) => tm.user, { eager: false })
-  teamMembers: TeamMember[];
+  @OneToMany(() => ProjectMember, (pm) => pm.user, { eager: false })
+  projectMembers: ProjectMember[];
 }

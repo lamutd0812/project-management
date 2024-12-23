@@ -1,8 +1,8 @@
 import { TIMESTAMP_TYPE } from '@common/constants/constant';
 import { BaseSoftDeleteEntity } from '@configuration/base-entity';
 import { Task } from 'src/modules/tasks/entities/task.entity';
-import { Team } from 'src/modules/teams/entities/team.entity';
-import { Entity, Column, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
+import { ProjectMember } from './project-member.entity';
 
 export enum ProjectStatus {
   TODO = 'TODO',
@@ -27,15 +27,9 @@ export class Project extends BaseSoftDeleteEntity {
   @Column({ type: 'enum', nullable: false, enum: ProjectStatus })
   status: ProjectStatus;
 
-  @Column({ name: 'team_id', type: 'uuid', nullable: false })
-  teamId: string;
-
-  @ManyToOne(() => Team, (team) => team.projects, { eager: false })
-  @JoinColumn({
-    name: 'team_id',
-  })
-  team: Team;
-
   @OneToMany(() => Task, (task) => task.project, { eager: false })
   tasks: Task[];
+
+  @OneToMany(() => ProjectMember, (pm) => pm.project, { eager: false })
+  members: ProjectMember[];
 }

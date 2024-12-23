@@ -4,10 +4,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { Role, ROLES_KEY } from '@common/enums/common.enum';
 import { RolesGuard } from '@common/guards/roles.guard';
 
-export const AuthenticateRole = (...roles: Role[]) => {
-  return applyDecorators(
-    UseGuards(AuthGuard('jwt'), RolesGuard),
-    SetMetadata(ROLES_KEY, roles),
-    ApiBearerAuth(),
-  );
-};
+export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
+
+export const Authorization = () =>
+  applyDecorators(UseGuards(AuthGuard('jwt'), RolesGuard), ApiBearerAuth());
