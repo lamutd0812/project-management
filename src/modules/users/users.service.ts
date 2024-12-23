@@ -1,8 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import { envConfig } from '@configuration/env.config';
 import { Role } from '@common/enums/common.enum';
 import * as bcrypt from 'bcrypt';
+import { CommonResponseDto } from '@common/dto/common-response.dto';
+import { Not } from 'typeorm';
+import { UpdateUserRoleDto } from './dto/update-user.dto';
+import { SearchUsersDto } from './dto/search-users.dto';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class UsersService {
@@ -34,5 +44,52 @@ export class UsersService {
     this.logger.log('>> Admin account is generated!');
 
     return newAdmin;
+  }
+
+  async searchUsers(idList: string[] = []): Promise<SearchUsersDto> {
+    const qb = this.userRepository
+      .createQueryBuilder('user')
+      .where('user.role <> :role', { role: Role.ADMIN })
+      .select([
+        'user.id',
+        'user.username',
+        'user.email',
+        'user.firstName',
+        'user.lastName',
+        'user.address',
+        'user.phoneNumber',
+        'user.role',
+      ]);
+
+    if (idList.length) {
+      qb.andWhere('user.id IN (:...idList)', { idList });
+    }
+
+    const users = await qb.getMany();
+
+    return {
+      statusCode: HttpStatus.OK,
+      success: true,
+      data: users,
+    };
+  }
+
+  @Transactional()
+  async updateUserRole(body: UpdateUserRoleDto): Promise<CommonResponseDto> {
+    const { userId, role } = body;
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId, role: Not(Role.ADMIN) },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found!');
+    }
+    user.role = role;
+    await this.userRepository.save(user);
+
+    return {
+      statusCode: HttpStatus.OK,
+      success: true,
+    };
   }
 }

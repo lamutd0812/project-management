@@ -1,4 +1,3 @@
-import { TransformInterceptor } from '@common/interceptors';
 import { CONFIG } from '@configuration/config.provider';
 import { envConfig } from '@configuration/env.config';
 
@@ -29,7 +28,7 @@ async function initializeApp(app: INestApplication) {
   app.setGlobalPrefix(envConfig.BASE_URL);
   app.useGlobalFilters(new AllExceptionsFilter());
   // Interceptors
-  app.useGlobalInterceptors(new TransformInterceptor());
+  // app.useGlobalInterceptors(new TransformInterceptor());
   app.useGlobalPipes(new ValidationPipe());
 }
 
