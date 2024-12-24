@@ -35,7 +35,7 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 # misc
-/config/local.yaml
+# /config/local.yaml
 /config/dev.yaml
 /config/default.yaml
 

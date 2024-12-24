@@ -44,6 +44,13 @@ async function initializeSwagger(app: INestApplication) {
 }
 
 async function bootstrap() {
+  console.log(
+    1111111111,
+    envConfig.DB_HOST,
+    envConfig.DB_PORT,
+    envConfig.DB_USERNAME,
+    envConfig.DB_PASSWORD,
+  );
   initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
   const appOptions = {
     cors: true,
