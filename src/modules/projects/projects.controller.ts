@@ -25,19 +25,14 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateProjectResponseDto } from './dto/update-project-response.dto';
 import { ProjectResponseDto } from './dto/project-response.dto';
 import { CommonResponseDto } from '@common/dto/common-response.dto';
+import { ReqUser } from '@common/decorators/req-user.decorator';
+import { User } from '../users/entities/user.entity';
 
 @Controller('projects')
 @ApiTags('projects')
 @Authorization()
 export class ProjectsController {
-  constructor(private projectsService: ProjectsService) {}
-
-  // @Get()
-  // @Roles(Role.ADMIN)
-  // test(@ReqUser() user: User) {
-  //   console.log(1111, user);
-  //   return this.projectsService.test();
-  // }
+  constructor(private readonly projectsService: ProjectsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Search projects' })
@@ -67,15 +62,16 @@ export class ProjectsController {
   }
 
   @Patch(':projectId')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.MANAGER) // Admin and manager can update project
   @ApiOperation({ summary: 'Update project' })
   @ApiBody({ type: UpdateProjectDto })
   @ApiOkResponse({ type: UpdateProjectResponseDto })
   updateProject(
     @Param('projectId', ParseUUIDPipe) projectId: string,
+    @ReqUser() user: User,
     @Body() body: UpdateProjectDto,
   ): Promise<UpdateProjectResponseDto> {
-    return this.projectsService.updateProject(projectId, body);
+    return this.projectsService.updateProject(projectId, user, body);
   }
 
   @Delete(':projectId')

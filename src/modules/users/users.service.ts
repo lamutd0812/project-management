@@ -18,7 +18,7 @@ import { Transactional } from 'typeorm-transactional';
 export class UsersService {
   private logger = new Logger('AuthService');
 
-  constructor(private userRepository: UserRepository) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   async generateAdmin() {
     const username = envConfig.ADMIN_USERNAME;
@@ -92,4 +92,7 @@ export class UsersService {
       success: true,
     };
   }
+
+  //#region helper
+  //#endregion helper
 }

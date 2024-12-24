@@ -10,8 +10,8 @@ import { SignInResponseDto } from './dto/sign-in-response.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private userRepository: UserRepository,
-    private jwtService: JwtService,
+    private readonly userRepository: UserRepository,
+    private readonly jwtService: JwtService,
   ) {}
 
   private logger = new Logger('AuthService');

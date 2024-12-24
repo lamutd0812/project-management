@@ -9,6 +9,7 @@ import {
   STATUS_CODE_DEFAULT,
   SUCCESS,
 } from '../constants/error-messages';
+import { DayJS } from './dayjs';
 
 // const DIGIT_NUMBER = '0123456789';
 // const CHARACTERS_LOWER_CASE = 'abcdefghijklmnopqrstuvwxyz';
@@ -173,6 +174,13 @@ export const camelCaseToSnakeCase = (data: any) => {
     );
   }
   return data;
+};
+
+export const verifyDueDate = (dueDate: Date): boolean => {
+  if (DayJS().utc().isAfter(DayJS(dueDate).utc())) {
+    return false;
+  }
+  return true;
 };
 
 export default common;

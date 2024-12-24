@@ -37,6 +37,6 @@ lerna-debug.log*
 # misc
 /config/local.yaml
 /config/dev.yaml
-# /config/default.yaml
+/config/default.yaml
 
 /redis_data/*

@@ -2,7 +2,6 @@ import {
   BadRequestException,
   HttpStatus,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -14,22 +13,21 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateProjectResponseDto } from './dto/update-project-response.dto';
 import { Not } from 'typeorm';
 import { Transactional } from 'typeorm-transactional';
-import { DayJS } from '@common/utils/dayjs';
 import { ProjectResponseDto } from './dto/project-response.dto';
 import { CommonResponseDto } from '@common/dto/common-response.dto';
 import { ProjectMemberRepository } from './repositories/project-member.repository';
 import { UsersService } from '../users/users.service';
 import { Role } from '@common/enums/common.enum';
 import { ProjectMember } from './entities/project-member.entity';
+import { verifyDueDate } from '@common/utils/common';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ProjectsService {
-  private logger = new Logger('ProjectsService');
-
   constructor(
-    private projectRepository: ProjectRepository,
-    private projectMemberRepository: ProjectMemberRepository,
-    private usersService: UsersService,
+    private readonly projectRepository: ProjectRepository,
+    private readonly projectMemberRepository: ProjectMemberRepository,
+    private readonly usersService: UsersService,
   ) {}
 
   async searchProjects(): Promise<SearchProjectsResponseDto> {
@@ -47,7 +45,7 @@ export class ProjectsService {
   }
 
   async getProjectDetail(projectId: string): Promise<ProjectResponseDto> {
-    const projects = await this.projectRepository
+    const project = await this.projectRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.members', 'members')
       .leftJoinAndSelect('project.tasks', 'tasks')
@@ -57,7 +55,7 @@ export class ProjectsService {
     return {
       statusCode: HttpStatus.OK,
       success: true,
-      data: projects,
+      data: project,
     };
   }
 
@@ -68,7 +66,10 @@ export class ProjectsService {
     const { name, description, dueDate, teamMemberIds } = body;
 
     // verify project due date
-    await this.verifyProjectDueDate(body.dueDate);
+    const isDueDateValid = verifyDueDate(body.dueDate);
+    if (!isDueDateValid) {
+      throw new BadRequestException('Invalid project due date!');
+    }
 
     const newProject = await this.projectRepository.save({
       name,
@@ -104,8 +105,10 @@ export class ProjectsService {
   @Transactional()
   async updateProject(
     projectId: string,
+    user: User,
     body: UpdateProjectDto,
   ): Promise<UpdateProjectResponseDto> {
+    const { id: userId, role: userRole } = user;
     const { teamMemberIds, ...updateData } = body;
     const project = await this.projectRepository.findOne({
       where: { id: projectId, status: Not(ProjectStatus.COMPLETED) }, // does not update completed project
@@ -116,7 +119,10 @@ export class ProjectsService {
     }
 
     // verify project due date
-    await this.verifyProjectDueDate(body.dueDate);
+    const isDueDateValid = verifyDueDate(body.dueDate);
+    if (!isDueDateValid) {
+      throw new BadRequestException('Invalid project due date!');
+    }
 
     // update project
     const updatedProject = await this.projectRepository.save({
@@ -125,22 +131,29 @@ export class ProjectsService {
     });
 
     // update project members
-    await this.validateProjectMembers(teamMemberIds);
+    const members = await this.validateProjectMembers(teamMemberIds);
+    const manager = members.find((m) => m.role === Role.MANAGER);
 
-    const currentMemberIds = project.members.map((m) => m.id);
+    // verify team manager
+    if (userRole === Role.MANAGER && userId !== manager.id) {
+      throw new BadRequestException('Invalid manager!');
+    }
+
+    // update project members
+    const currentMemberIds = project.members.map((m) => m.userId);
     const newMemberIds = teamMemberIds.filter(
       (item) => !currentMemberIds.includes(item),
     );
     const deleteMemberIds = currentMemberIds.filter(
       (item) => !teamMemberIds.includes(item),
     );
-
     const newMembers = newMemberIds.map((userId) => {
       return {
         projectId,
         userId,
       } as ProjectMember;
     });
+
     await Promise.all([
       this.projectMemberRepository
         .createQueryBuilder()
@@ -181,12 +194,6 @@ export class ProjectsService {
   }
 
   //#region helper
-  private async verifyProjectDueDate(dueDate: Date) {
-    if (DayJS().utc().isAfter(DayJS(dueDate).utc())) {
-      throw new BadRequestException('Invalid project due date!');
-    }
-  }
-
   private async validateProjectMembers(teamMemberIds: string[]) {
     const { data: users } = await this.usersService.searchUsers(teamMemberIds);
     if (!users.length) {
