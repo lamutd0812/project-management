@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { Authorization, Roles } from '@common/decorators/auth.decorator';
@@ -25,6 +26,7 @@ import { Role } from '@common/enums/common.enum';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { CommonResponseDto } from '@common/dto/common-response.dto';
 import { SearchTasksResponseDto } from './dto/search-tasks-response.dto';
+import { SearchTasksDto } from './dto/search-tasks.dto';
 
 @Controller('tasks')
 @ApiTags('tasks')
@@ -36,8 +38,8 @@ export class TasksController {
   @Roles(Role.ADMIN, Role.MANAGER, Role.CONTRIBUTOR)
   @ApiOperation({ summary: 'Search tasks' })
   @ApiOkResponse({ type: SearchTasksResponseDto })
-  searchTasks(): Promise<SearchTasksResponseDto> {
-    return this.tasksService.searchTasks();
+  searchTasks(@Query() query: SearchTasksDto): Promise<SearchTasksResponseDto> {
+    return this.tasksService.searchTasks(query);
   }
 
   @Get(':taskId')

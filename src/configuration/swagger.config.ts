@@ -22,5 +22,6 @@ export const customOptions: SwaggerCustomOptions = {
   customSiteTitle: 'Backend Project Base API Docs',
   swaggerOptions: {
     persistAuthorization: true,
+    operationsSorter: 'method',
   },
 };

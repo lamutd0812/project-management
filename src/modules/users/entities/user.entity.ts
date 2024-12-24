@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '@common/enums/common.enum';
 import { Task } from 'src/modules/tasks/entities/task.entity';
 import { ProjectMember } from 'src/modules/projects/entities/project-member.entity';
+import { TIMESTAMP_TYPE } from '@common/constants/constant';
 
 @Entity('users')
 export class User extends BaseSoftDeleteEntity {
@@ -27,6 +28,12 @@ export class User extends BaseSoftDeleteEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   address: string;
+
+  @Column({ name: 'reset_pwd_otp', type: 'integer', nullable: true })
+  resetPwdOtp: number;
+
+  @Column({ name: 'reset_pwd_exp_time', type: TIMESTAMP_TYPE, nullable: true })
+  resetPwdExpTime: Date;
 
   @Column({
     name: 'phone_number',

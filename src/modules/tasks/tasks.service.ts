@@ -9,7 +9,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { User } from '../users/entities/user.entity';
 import { ProjectsService } from '../projects/projects.service';
 import { ProjectStatus } from '../projects/entities/project.entity';
-import { Role } from '@common/enums/common.enum';
+import { Role, SortType } from '@common/enums/common.enum';
 import { TaskStatus } from './entities/task.entity';
 import { Transactional } from 'typeorm-transactional';
 import { TaskResponseDto } from './dto/task-response.dto';
@@ -17,6 +17,8 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { verifyDueDate } from '@common/utils/common';
 import { CommonResponseDto } from '@common/dto/common-response.dto';
 import { SearchTasksResponseDto } from './dto/search-tasks-response.dto';
+import { SearchTasksDto, TASK_SORT_FIELD } from './dto/search-tasks.dto';
+import { Brackets } from 'typeorm';
 
 @Injectable()
 export class TasksService {
@@ -25,17 +27,101 @@ export class TasksService {
     private readonly projectsService: ProjectsService,
   ) {}
 
-  async searchTasks(): Promise<SearchTasksResponseDto> {
-    const tasks = await this.taskRepository
+  async searchTasks(query: SearchTasksDto): Promise<SearchTasksResponseDto> {
+    const {
+      search,
+      projectId,
+      asignee,
+      dueDateFrom,
+      dueDateTo,
+      status,
+      page,
+      limit,
+      sort = SortType.DESC,
+      sortBy = TASK_SORT_FIELD.CREATED_AT,
+    } = query;
+    console.log('>> query:', query);
+    const qb = this.taskRepository
       .createQueryBuilder('task')
-      .leftJoinAndSelect('task.project', 'project')
-      .leftJoinAndSelect('project.members', 'members')
-      .getMany();
+      .innerJoinAndSelect('task.project', 'project')
+      .innerJoinAndSelect('task.asignee', 'asignee')
+      .innerJoinAndSelect('project.members', 'members');
+
+    // filter by search keyword for task name/ description
+    if (search) {
+      const searchTrim = search.trim()?.toLowerCase()?.replace(/ +/g, ' ');
+      qb.andWhere(
+        new Brackets((qb) => {
+          qb.orWhere(`LOWER(task.name) LIKE :search`, {
+            search: `%${searchTrim}%`,
+          }).orWhere(`LOWER(task.description) LIKE :search`, {
+            search: `%${searchTrim}%`,
+          });
+        }),
+      );
+    }
+
+    // filter by project
+    if (projectId) {
+      qb.andWhere(`task.projectId = :projectId`, { projectId });
+    }
+
+    // filter by asignee name/ email
+    if (asignee) {
+      const asigneeSearchTrim = asignee
+        .trim()
+        ?.toLowerCase()
+        ?.replace(/ +/g, ' ');
+      qb.andWhere(
+        new Brackets((qb) => {
+          qb.orWhere(`LOWER(asignee.email) LIKE :search`, {
+            search: `%${asigneeSearchTrim}%`,
+          }).orWhere(
+            "CONCAT(asignee.firstName, ' ', asignee.lastName) LIKE :search",
+            {
+              search: `%${asigneeSearchTrim}%`,
+            },
+          );
+        }),
+      );
+    }
+
+    // filter by due date
+    if (dueDateFrom && !dueDateTo) {
+      qb.andWhere('task.dueDate >= :dueDateFrom', {
+        dueDateFrom,
+      });
+    }
+    if (!dueDateFrom && dueDateTo) {
+      qb.andWhere('task.dueDate <= :dueDateTo', {
+        dueDateTo,
+      });
+    }
+    if (dueDateFrom && dueDateTo) {
+      qb.andWhere(
+        '(task.dueDate >= :dueDateFrom AND task.dueDate <= :dueDateTo)',
+        { dueDateFrom, dueDateTo },
+      );
+    }
+
+    // filter by task status
+    if (status) {
+      qb.andWhere(`task.status = :status`, { status });
+    }
+
+    // sort
+    qb.orderBy(`task.${sortBy}`, sort);
+
+    const [tasks, itemCount] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     return {
       statusCode: HttpStatus.OK,
       success: true,
       data: tasks,
+      total: itemCount,
     };
   }
 
@@ -76,10 +162,7 @@ export class TasksService {
 
     // verify team manager
     const teamMemberIds = members.map((m) => m.userId);
-    console.log(11111, teamMemberIds);
     const managerUserId = teamMemberIds.find((tmId) => tmId === userId);
-    console.log(22222, managerUserId);
-    console.log(33333, userId);
     if (userRole === Role.MANAGER && !managerUserId) {
       throw new NotFoundException('Project not found!');
     }
@@ -165,7 +248,6 @@ export class TasksService {
 
     // update task
     delete body?.projectId;
-    console.log(222222, body);
     const updatedTask = await this.taskRepository.save({
       id: task.id,
       ...body,
