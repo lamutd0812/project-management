@@ -19,12 +19,15 @@ import { CommonResponseDto } from '@common/dto/common-response.dto';
 import { SearchTasksResponseDto } from './dto/search-tasks-response.dto';
 import { SearchTasksDto, TASK_SORT_FIELD } from './dto/search-tasks.dto';
 import { Brackets } from 'typeorm';
+import { ActivityLogsService } from '../activity-logs/activity-logs.service';
+import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
 
 @Injectable()
 export class TasksService {
   constructor(
     private readonly taskRepository: TaskRepository,
     private readonly projectsService: ProjectsService,
+    private readonly activityLogsService: ActivityLogsService,
   ) {}
 
   async searchTasks(query: SearchTasksDto): Promise<SearchTasksResponseDto> {
@@ -184,7 +187,14 @@ export class TasksService {
 
     // TODO: send notification to asingee
 
-    // TODO: save activity log
+    // save activity log
+    await this.activityLogsService.create({
+      content: `Task ${newTask.name} of project ${project.name} has been created.`,
+      category: ActivityLogCategory.TASKS,
+      createdBy: user.id,
+      projectId: project.id,
+      taskId: newTask.id,
+    });
 
     return {
       statusCode: HttpStatus.CREATED,
@@ -253,7 +263,14 @@ export class TasksService {
       ...body,
     });
 
-    // TODO: save activity log
+    // save activity log
+    await this.activityLogsService.create({
+      content: `Task ${updatedTask.name} of project ${task.project.name} has been updated.`,
+      category: ActivityLogCategory.TASKS,
+      createdBy: user.id,
+      projectId: task.project.id,
+      taskId: updatedTask.id,
+    });
 
     // TODO: send notification to new asingee
 
@@ -290,6 +307,15 @@ export class TasksService {
     }
 
     await task.softRemove();
+
+    // save activity log
+    await this.activityLogsService.create({
+      content: `Task ${task.name} of project ${task.project.name} has been deleted.`,
+      category: ActivityLogCategory.TASKS,
+      createdBy: user.id,
+      projectId: task.project.id,
+      taskId: task.id,
+    });
 
     return {
       statusCode: HttpStatus.OK,

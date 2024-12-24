@@ -21,12 +21,17 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { generateOTP } from '@common/utils/common';
 import { DayJS } from '@common/utils/dayjs';
 import { CompleteResetPasswordDto } from './dto/complete-reset-password.sto';
+import { ActivityLogsService } from '../activity-logs/activity-logs.service';
+import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
 
 @Injectable()
 export class UsersService {
   private logger = new Logger('AuthService');
 
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly activityLogsService: ActivityLogsService,
+  ) {}
 
   async generateAdmin() {
     const username = envConfig.ADMIN_USERNAME;
@@ -95,6 +100,14 @@ export class UsersService {
     user.role = role;
     await this.userRepository.save(user);
 
+    // save activity log
+    await this.activityLogsService.create({
+      content: `User ${user.username} role has been updated.`,
+      category: ActivityLogCategory.USERS,
+      createdBy: user.id,
+      userId: user.id,
+    });
+
     return {
       statusCode: HttpStatus.OK,
       success: true,
@@ -129,6 +142,14 @@ export class UsersService {
     const updatedUser = await this.userRepository.save({
       id: user.id,
       ...body,
+    });
+
+    // save activity log
+    await this.activityLogsService.create({
+      content: `User ${user.username} updated his profile.`,
+      category: ActivityLogCategory.USERS,
+      createdBy: user.id,
+      userId: user.id,
     });
 
     return {
@@ -203,6 +224,14 @@ export class UsersService {
     user.resetPwdOtp = null;
     user.resetPwdExpTime = null;
     await user.save();
+
+    // save activity log
+    await this.activityLogsService.create({
+      content: `User ${user.username} password has been reset.`,
+      category: ActivityLogCategory.USERS,
+      createdBy: user.id,
+      userId: user.id,
+    });
 
     return {
       statusCode: HttpStatus.OK,

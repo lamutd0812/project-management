@@ -56,9 +56,10 @@ export class ProjectsController {
   @ApiBody({ type: CreateProjectDto })
   @ApiCreatedResponse({ type: CreateProjectResponseDto })
   createProject(
+    @ReqUser() user: User,
     @Body() body: CreateProjectDto,
   ): Promise<CreateProjectResponseDto> {
-    return this.projectsService.createProject(body);
+    return this.projectsService.createProject(user, body);
   }
 
   @Patch(':projectId')
@@ -80,7 +81,8 @@ export class ProjectsController {
   @ApiOkResponse({ type: CommonResponseDto })
   deleteProject(
     @Param('projectId', ParseUUIDPipe) projectId: string,
+    @ReqUser() user: User,
   ): Promise<CommonResponseDto> {
-    return this.projectsService.deleteProject(projectId);
+    return this.projectsService.deleteProject(user, projectId);
   }
 }

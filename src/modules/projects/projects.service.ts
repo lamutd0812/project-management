@@ -21,6 +21,8 @@ import { Role } from '@common/enums/common.enum';
 import { ProjectMember } from './entities/project-member.entity';
 import { verifyDueDate } from '@common/utils/common';
 import { User } from '../users/entities/user.entity';
+import { ActivityLogsService } from '../activity-logs/activity-logs.service';
+import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
 
 @Injectable()
 export class ProjectsService {
@@ -28,6 +30,7 @@ export class ProjectsService {
     private readonly projectRepository: ProjectRepository,
     private readonly projectMemberRepository: ProjectMemberRepository,
     private readonly usersService: UsersService,
+    private readonly activityLogsService: ActivityLogsService,
   ) {}
 
   async searchProjects(): Promise<SearchProjectsResponseDto> {
@@ -61,6 +64,7 @@ export class ProjectsService {
 
   @Transactional()
   async createProject(
+    user: User,
     body: CreateProjectDto,
   ): Promise<CreateProjectResponseDto> {
     const { name, description, dueDate, teamMemberIds } = body;
@@ -94,6 +98,14 @@ export class ProjectsService {
       .returning('*')
       .execute();
     newProject.members = insertResult.raw;
+
+    // save activity log
+    await this.activityLogsService.create({
+      content: `Project ${newProject.name} has been created.`,
+      category: ActivityLogCategory.PROJECTS,
+      createdBy: user.id,
+      projectId: newProject.id,
+    });
 
     return {
       statusCode: HttpStatus.CREATED,
@@ -154,21 +166,30 @@ export class ProjectsService {
       } as ProjectMember;
     });
 
-    await Promise.all([
-      this.projectMemberRepository
-        .createQueryBuilder()
-        .insert()
-        .into(ProjectMember)
-        .values(newMembers)
-        .returning('*')
-        .execute(),
-      this.projectMemberRepository
+    await this.projectMemberRepository
+      .createQueryBuilder()
+      .insert()
+      .into(ProjectMember)
+      .values(newMembers)
+      .returning('*')
+      .execute();
+
+    if (deleteMemberIds.length) {
+      await this.projectMemberRepository
         .createQueryBuilder()
         .update(ProjectMember)
         .set({ deletedAt: new Date() })
         .where('id IN (:...ids)', { ids: deleteMemberIds })
-        .execute(),
-    ]);
+        .execute();
+    }
+
+    // save activity log
+    await this.activityLogsService.create({
+      content: `Project ${updatedProject.name} has been updated.`,
+      category: ActivityLogCategory.PROJECTS,
+      createdBy: user.id,
+      projectId: updatedProject.id,
+    });
 
     return {
       statusCode: HttpStatus.OK,
@@ -177,7 +198,10 @@ export class ProjectsService {
     };
   }
 
-  async deleteProject(projectId: string): Promise<CommonResponseDto> {
+  async deleteProject(
+    user: User,
+    projectId: string,
+  ): Promise<CommonResponseDto> {
     const project = await this.projectRepository.findOne({
       where: { id: projectId, status: ProjectStatus.TODO }, // only delete TODO projects
     });
@@ -186,6 +210,14 @@ export class ProjectsService {
     }
 
     await project.softRemove();
+
+    // save activity log
+    await this.activityLogsService.create({
+      content: `Project ${project.name} has been deleted.`,
+      category: ActivityLogCategory.PROJECTS,
+      createdBy: user.id,
+      projectId: project.id,
+    });
 
     return {
       statusCode: HttpStatus.OK,

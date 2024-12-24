@@ -5,6 +5,7 @@ import { Role } from '@common/enums/common.enum';
 import { Task } from 'src/modules/tasks/entities/task.entity';
 import { ProjectMember } from 'src/modules/projects/entities/project-member.entity';
 import { TIMESTAMP_TYPE } from '@common/constants/constant';
+import { ActivityLog } from 'src/modules/activity-logs/entities/activity-log.entity';
 
 @Entity('users')
 export class User extends BaseSoftDeleteEntity {
@@ -57,4 +58,7 @@ export class User extends BaseSoftDeleteEntity {
 
   @OneToMany(() => ProjectMember, (pm) => pm.user, { eager: false })
   projectMembers: ProjectMember[];
+
+  @OneToMany(() => ActivityLog, (al) => al.creator, { eager: false })
+  activityLogs: ActivityLog[];
 }
