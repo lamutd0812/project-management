@@ -37,7 +37,7 @@ export class SignUpDto {
   @IsString()
   lastName: string;
 
-  @ApiProperty({ example: 'lamtest@gmail.com' })
+  @ApiProperty({ example: 'lamtest1@yopmail.com' })
   @IsNotEmpty()
   @IsString()
   @IsEmail()

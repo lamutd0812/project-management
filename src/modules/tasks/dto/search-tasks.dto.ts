@@ -31,11 +31,11 @@ export class SearchTasksDto extends CommonPaginationDto {
 
   @ApiProperty({
     required: false,
-    description: 'search asignee by name/ email',
+    description: 'search assignee by name/ email',
   })
   @IsString()
   @IsOptional()
-  asignee?: string;
+  assignee?: string;
 
   @ApiProperty({ required: false, description: 'filter by due date from' })
   @IsOptional()

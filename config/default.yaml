@@ -12,8 +12,8 @@ service:
   apiVersion: 1.0
 
 db:
-  # host: localhost
-  host: db
+  host: localhost
+  # host: db
   port: 5432
   username: postgres
   password: 123@456aA
@@ -26,3 +26,10 @@ jwt:
 admin:
   username: admin
   password: P@ssW0rD@1
+
+mail:
+  host: smtp.gmail.com
+  user: your_email
+  password: your_email_password
+  from: your_email
+  port: 587

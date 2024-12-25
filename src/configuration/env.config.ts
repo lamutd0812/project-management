@@ -27,4 +27,11 @@ export const envConfig = {
   // admin
   ADMIN_USERNAME: config.get<string>('admin.username'),
   ADMIN_PASSWORD: config.get<string>('admin.password'),
+
+  // mail
+  MAIL_HOST: config.get<string>('mail.host'),
+  MAIL_USER: config.get<string>('mail.user'),
+  MAIL_PASSWORD: config.get<string>('mail.password'),
+  MAIL_FROM: config.get<string>('mail.from'),
+  MAIL_PORT: config.get<string>('mail.port'),
 };

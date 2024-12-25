@@ -23,6 +23,6 @@
       "@common/*": ["src/common/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.hbs"],
   "exclude": ["node_modules", "dist"]
 }

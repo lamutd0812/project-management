@@ -53,7 +53,7 @@ export class User extends BaseSoftDeleteEntity {
   }
 
   // relations
-  @OneToMany(() => Task, (task) => task.asignee, { eager: false })
+  @OneToMany(() => Task, (task) => task.assignee, { eager: false })
   tasks: Task[];
 
   @OneToMany(() => ProjectMember, (pm) => pm.user, { eager: false })

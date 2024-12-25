@@ -23,6 +23,7 @@ import { DayJS } from '@common/utils/dayjs';
 import { CompleteResetPasswordDto } from './dto/complete-reset-password.sto';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
+import { MailerService } from '../mailer/mailer.service';
 
 @Injectable()
 export class UsersService {
@@ -31,6 +32,7 @@ export class UsersService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly activityLogsService: ActivityLogsService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async generateAdmin() {
@@ -185,7 +187,7 @@ export class UsersService {
 
     // update user infor
     user.resetPwdOtp = resetPwdOtp;
-    user.resetPwdExpTime = currentTime.add(5, 'minutes').toDate();
+    user.resetPwdExpTime = currentTime.add(10, 'minutes').toDate();
     const updatedUser = await user.save();
     this.logger.log(
       '>> user password requested: ',
@@ -193,6 +195,13 @@ export class UsersService {
     );
 
     // TODO: send OTP to user's email
+    this.mailerService.sendResetPasswordEmail({
+      toEmail: user.email,
+      username: user.username,
+      userFullName: `${user.firstName} ${user.lastName}`,
+      otp: user.resetPwdOtp,
+      resetPasswordUrl: 'someurl...',
+    });
 
     return {
       statusCode: HttpStatus.OK,
@@ -237,6 +246,10 @@ export class UsersService {
       statusCode: HttpStatus.OK,
       success: true,
     };
+  }
+
+  findUserById(id: string) {
+    return this.userRepository.findOne({ where: { id } });
   }
 
   //#region helper

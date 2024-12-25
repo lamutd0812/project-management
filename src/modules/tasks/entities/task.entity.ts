@@ -1,8 +1,9 @@
 import { TIMESTAMP_TYPE } from '@common/constants/constant';
 import { BaseSoftDeleteEntity } from '@configuration/base-entity';
+import { MailDetail } from 'src/modules/mailer/entities/mail-detail.entity';
 import { Project } from 'src/modules/projects/entities/project.entity';
 import { User } from 'src/modules/users/entities/user.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 export enum TaskStatus {
   TODO = 'TODO',
@@ -30,8 +31,8 @@ export class Task extends BaseSoftDeleteEntity {
   @Column({ name: 'project_id', type: 'uuid', nullable: false })
   projectId: string;
 
-  @Column({ name: 'asignee_id', type: 'uuid', nullable: false })
-  asigneeId: string;
+  @Column({ name: 'assignee_id', type: 'uuid', nullable: false })
+  assigneeId: string;
 
   // relations
   @ManyToOne(() => Project, (project) => project.tasks, { eager: false })
@@ -42,7 +43,10 @@ export class Task extends BaseSoftDeleteEntity {
 
   @ManyToOne(() => User, (user) => user.tasks, { eager: false })
   @JoinColumn({
-    name: 'asignee_id',
+    name: 'assignee_id',
   })
-  asignee: User;
+  assignee: User;
+
+  @OneToMany(() => MailDetail, (md) => md.task, { eager: false })
+  mailDetails: MailDetail[];
 }

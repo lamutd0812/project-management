@@ -21,6 +21,8 @@ import { SearchTasksDto, TASK_SORT_FIELD } from './dto/search-tasks.dto';
 import { Brackets } from 'typeorm';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
+import { MailerService } from '../mailer/mailer.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class TasksService {
@@ -28,13 +30,15 @@ export class TasksService {
     private readonly taskRepository: TaskRepository,
     private readonly projectsService: ProjectsService,
     private readonly activityLogsService: ActivityLogsService,
+    private readonly usersService: UsersService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async searchTasks(query: SearchTasksDto): Promise<SearchTasksResponseDto> {
     const {
       search,
       projectId,
-      asignee,
+      assignee,
       dueDateFrom,
       dueDateTo,
       status,
@@ -47,7 +51,7 @@ export class TasksService {
     const qb = this.taskRepository
       .createQueryBuilder('task')
       .innerJoinAndSelect('task.project', 'project')
-      .innerJoinAndSelect('task.asignee', 'asignee')
+      .innerJoinAndSelect('task.assignee', 'assignee')
       .innerJoinAndSelect('project.members', 'members');
 
     // filter by search keyword for task name/ description
@@ -69,20 +73,20 @@ export class TasksService {
       qb.andWhere(`task.projectId = :projectId`, { projectId });
     }
 
-    // filter by asignee name/ email
-    if (asignee) {
-      const asigneeSearchTrim = asignee
+    // filter by assignee name/ email
+    if (assignee) {
+      const assigneeSearchTrim = assignee
         .trim()
         ?.toLowerCase()
         ?.replace(/ +/g, ' ');
       qb.andWhere(
         new Brackets((qb) => {
-          qb.orWhere(`LOWER(asignee.email) LIKE :search`, {
-            search: `%${asigneeSearchTrim}%`,
+          qb.orWhere(`LOWER(assignee.email) LIKE :search`, {
+            search: `%${assigneeSearchTrim}%`,
           }).orWhere(
-            "CONCAT(asignee.firstName, ' ', asignee.lastName) LIKE :search",
+            "CONCAT(assignee.firstName, ' ', assignee.lastName) LIKE :search",
             {
-              search: `%${asigneeSearchTrim}%`,
+              search: `%${assigneeSearchTrim}%`,
             },
           );
         }),
@@ -146,7 +150,7 @@ export class TasksService {
   @Transactional()
   async createTask(user: User, body: CreateTaskDto) {
     const { id: userId, role: userRole } = user;
-    const { name, description, dueDate, projectId, asigneeId } = body;
+    const { name, description, dueDate, projectId, assigneeId } = body;
 
     const { data: project } =
       await this.projectsService.getProjectDetail(projectId);
@@ -170,9 +174,9 @@ export class TasksService {
       throw new NotFoundException('Project not found!');
     }
 
-    // verify asignee
-    if (!teamMemberIds.includes(asigneeId)) {
-      throw new BadRequestException('Invalid asignee!');
+    // verify assignee
+    if (!teamMemberIds.includes(assigneeId)) {
+      throw new BadRequestException('Invalid assignee!');
     }
 
     // create task
@@ -181,11 +185,20 @@ export class TasksService {
       description,
       dueDate,
       projectId,
-      asigneeId,
+      assigneeId,
       status: TaskStatus.TODO,
     });
 
-    // TODO: send notification to asingee
+    // send email notification to asingee
+    const assignee = await this.usersService.findUserById(assigneeId);
+    this.mailerService.sendTaskAssignedEmail({
+      assigneeFullName: `${assignee.firstName} ${assignee.lastName}`,
+      taskId: newTask.id,
+      dueDate: newTask.dueDate,
+      taskName: newTask.name,
+      taskUrl: 'some url...',
+      toEmail: assignee.email,
+    });
 
     // save activity log
     await this.activityLogsService.create({
@@ -210,7 +223,7 @@ export class TasksService {
     body: UpdateTaskDto,
   ): Promise<TaskResponseDto> {
     const { id: userId, role: userRole } = user;
-    const { asigneeId, dueDate, status } = body;
+    const { assigneeId, dueDate, status } = body;
 
     const task = await this.taskRepository
       .createQueryBuilder('task')
@@ -225,19 +238,19 @@ export class TasksService {
     }
     const {
       status: currentStatus,
-      asigneeId: currentAsigneeId,
+      assigneeId: currentassigneeId,
       project: { members },
     } = task;
 
     // verify user permission
-    if (userRole !== Role.ADMIN && userId !== currentAsigneeId) {
+    if (userRole !== Role.ADMIN && userId !== currentassigneeId) {
       throw new NotFoundException('Task not found!');
     }
 
-    // verify asignee update
+    // verify assignee update
     const teamMemberIds = members.map((m) => m.userId);
-    if (asigneeId && !teamMemberIds.includes(asigneeId)) {
-      throw new BadRequestException('Invalid asignee!');
+    if (assigneeId && !teamMemberIds.includes(assigneeId)) {
+      throw new BadRequestException('Invalid assignee!');
     }
 
     // verify due date update
@@ -292,7 +305,7 @@ export class TasksService {
 
     // contributor only can delete their task
     if (userRole === Role.CONTRIBUTOR) {
-      qb.andWhere('task.asigneeId = :asigneeId', { asigneeId: userId });
+      qb.andWhere('task.assigneeId = :assigneeId', { assigneeId: userId });
     }
 
     const task = await qb.getOne();

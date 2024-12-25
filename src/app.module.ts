@@ -12,6 +12,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ActivityLogsModule } from './modules/activity-logs/activity-logs.module';
+import { MailerModule } from './modules/mailer/mailer.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ActivityLogsModule } from './modules/activity-logs/activity-logs.module
     TasksModule,
     AuthModule,
     ActivityLogsModule,
+    MailerModule,
   ],
   controllers: [AppController],
   providers: [AppService, configProvider],

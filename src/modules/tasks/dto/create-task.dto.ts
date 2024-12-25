@@ -29,5 +29,5 @@ export class CreateTaskDto {
   @ApiProperty()
   @IsOptional()
   @IsUUID()
-  asigneeId?: string;
+  assigneeId?: string;
 }
