@@ -67,7 +67,7 @@ export class UsersController {
   }
 
   @Post('reset-password/complete')
-  @ApiOperation({ summary: 'Compelte reset password' })
+  @ApiOperation({ summary: 'Complete reset password' })
   @ApiBody({ type: CompleteResetPasswordDto })
   @ApiOkResponse({ type: CommonResponseDto })
   completeResetPassword(
