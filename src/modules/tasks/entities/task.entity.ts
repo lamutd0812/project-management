@@ -1,6 +1,6 @@
 import { TIMESTAMP_TYPE } from '@common/constants/constant';
 import { BaseSoftDeleteEntity } from '@configuration/base-entity';
-import { MailDetail } from 'src/modules/mailer/entities/mail-detail.entity';
+import { MailDetail } from 'src/mailer/entities/mail-detail.entity';
 import { Project } from 'src/modules/projects/entities/project.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';

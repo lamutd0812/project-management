@@ -21,7 +21,7 @@ import { SearchTasksDto, TASK_SORT_FIELD } from './dto/search-tasks.dto';
 import { Brackets } from 'typeorm';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
-import { MailerService } from '../mailer/mailer.service';
+import { MailerService } from '../../mailer/mailer.service';
 import { UsersService } from '../users/users.service';
 
 @Injectable()

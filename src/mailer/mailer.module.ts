@@ -7,7 +7,7 @@ import { envConfig } from '@configuration/env.config';
 import { MailDetailRepository } from './repositories/mail-detail.repository';
 import { MailDetail } from './entities/mail-detail.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import * as path from 'path';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -29,17 +29,7 @@ import * as path from 'path';
           from: `"No Reply" <${envConfig.MAIL_FROM}>`,
         },
         template: {
-          // dir: join(__dirname, './templates'),
-          dir: path.resolve(
-            __dirname,
-            '..',
-            '..',
-            '..',
-            'src',
-            'modules',
-            'mailer',
-            'templates',
-          ),
+          dir: join(__dirname, './templates'),
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,

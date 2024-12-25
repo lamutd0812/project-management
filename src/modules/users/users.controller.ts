@@ -15,11 +15,11 @@ import { CompleteResetPasswordDto } from './dto/complete-reset-password.sto';
 
 @Controller('users')
 @ApiTags('users')
-@Authorization()
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get()
+  @Authorization()
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Search users ' })
   @ApiOkResponse({ type: SearchUsersDto })
@@ -28,6 +28,7 @@ export class UsersController {
   }
 
   @Get('me')
+  @Authorization()
   @ApiOperation({ summary: 'Get my user profile' })
   @ApiOkResponse({ type: UserProfileResponseDto })
   getMyProfile(@ReqUser() user: User): UserProfileResponseDto {
@@ -35,6 +36,7 @@ export class UsersController {
   }
 
   @Patch('me')
+  @Authorization()
   @ApiOperation({ summary: 'Update my user profile' })
   @ApiBody({ type: UpdateMyProfileDto })
   updateMyProfile(
@@ -45,6 +47,7 @@ export class UsersController {
   }
 
   @Patch('role')
+  @Authorization()
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: '[Admin] Role reassignment' })
   @ApiBody({ type: UpdateUserRoleDto })

@@ -5,7 +5,7 @@ services:
     image: project-management:v1
     build: .
     ports:
-      - '3000:3000'
+      - '3003:3000'
     restart: unless-stopped
     depends_on:
       - db
@@ -23,7 +23,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123@456aA
     ports:
-      - '5432:5432'
+      - '5436:5432'
     volumes:
       - db:/var/lib/postgresql/data
     networks:

@@ -23,7 +23,7 @@ import { DayJS } from '@common/utils/dayjs';
 import { CompleteResetPasswordDto } from './dto/complete-reset-password.sto';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
-import { MailerService } from '../mailer/mailer.service';
+import { MailerService } from '../../mailer/mailer.service';
 
 @Injectable()
 export class UsersService {

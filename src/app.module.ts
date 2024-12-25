@@ -12,7 +12,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ActivityLogsModule } from './modules/activity-logs/activity-logs.module';
-import { MailerModule } from './modules/mailer/mailer.module';
+import { MailerModule } from './mailer/mailer.module';
 
 @Module({
   imports: [

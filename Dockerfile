@@ -1,19 +1,18 @@
-# Build stage
-FROM node:20-alpine AS build
+FROM node:20-alpine as base
+FROM base as builder
 WORKDIR /app
-COPY package.json ./
-COPY . .
+COPY package.json yarn.lock ./
 RUN yarn
+COPY . .
 RUN yarn build
 
-# Run stage
-FROM node:20-alpine
+FROM base
 WORKDIR /app
-COPY --from=build /app/node_modules /app/node_modules
-COPY --from=build /app/dist /app/dist
-COPY --from=build /app/package.json /app/package.json
-COPY --from=build /app/yarn.lock /app/yarn.lock
-COPY ./config /app/config
+COPY package.json yarn.lock ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/mailer/templates ./dist/mailer/templates
 
 EXPOSE 3000
+
 CMD ["yarn", "start:prod"]

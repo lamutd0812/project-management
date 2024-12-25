@@ -6,7 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskRepository } from './repositories/task.repository';
 import { ProjectsModule } from '../projects/projects.module';
 import { ActivityLogsModule } from '../activity-logs/activity-logs.module';
-import { MailerModule } from '../mailer/mailer.module';
+import { MailerModule } from '../../mailer/mailer.module';
 import { UsersModule } from '../users/users.module';
 
 @Module({

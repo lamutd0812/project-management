@@ -12,8 +12,8 @@ service:
   apiVersion: 1.0
 
 db:
-  host: localhost
-  # host: db
+  # host: localhost
+  host: db
   port: 5432
   username: postgres
   password: 123@456aA
