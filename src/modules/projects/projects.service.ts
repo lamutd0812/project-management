@@ -34,19 +34,7 @@ export class ProjectsService {
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.members', 'members')
       .leftJoinAndSelect('project.tasks', 'tasks')
-      .select([
-        'project.name',
-        'project.description',
-        'project.createdAt',
-        'project.dueDate',
-        'project.completedAt',
-        'project.status',
-        'tasks.description',
-        'tasks.createdAt',
-        'tasks.dueDate',
-        'tasks.completedAt',
-        'tasks.status',
-      ])
+      .select(this.getProjectSelectedFields())
       .getMany();
 
     return {
@@ -62,19 +50,7 @@ export class ProjectsService {
       .leftJoinAndSelect('project.members', 'members')
       .leftJoinAndSelect('project.tasks', 'tasks')
       .where('project.id = :projectId', { projectId })
-      .select([
-        'project.name',
-        'project.description',
-        'project.createdAt',
-        'project.dueDate',
-        'project.completedAt',
-        'project.status',
-        'tasks.description',
-        'tasks.createdAt',
-        'tasks.dueDate',
-        'tasks.completedAt',
-        'tasks.status',
-      ])
+      .select(this.getProjectSelectedFields())
       .getOne();
 
     return {
@@ -259,6 +235,24 @@ export class ProjectsService {
     }
 
     return users;
+  }
+
+  private getProjectSelectedFields() {
+    return [
+      'project.name',
+      'project.description',
+      'project.createdAt',
+      'project.dueDate',
+      'project.completedAt',
+      'project.status',
+      'tasks.description',
+      'tasks.createdAt',
+      'tasks.dueDate',
+      'tasks.completedAt',
+      'tasks.status',
+      'members.userId',
+      'members.projectId',
+    ];
   }
   //#endregion helper
 }
