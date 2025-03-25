@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProjectResponseDto } from './dto/create-project-response.dto';
 import { ProjectRepository } from './repositories/project.repository';
@@ -23,6 +18,7 @@ import { verifyDueDate } from '@common/utils/common';
 import { User } from '../users/entities/user.entity';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
+import { ResponseException } from 'src/filters/exception-response';
 
 @Injectable()
 export class ProjectsService {
@@ -38,6 +34,19 @@ export class ProjectsService {
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.members', 'members')
       .leftJoinAndSelect('project.tasks', 'tasks')
+      .select([
+        'project.name',
+        'project.description',
+        'project.createdAt',
+        'project.dueDate',
+        'project.completedAt',
+        'project.status',
+        'tasks.description',
+        'tasks.createdAt',
+        'tasks.dueDate',
+        'tasks.completedAt',
+        'tasks.status',
+      ])
       .getMany();
 
     return {
@@ -53,6 +62,19 @@ export class ProjectsService {
       .leftJoinAndSelect('project.members', 'members')
       .leftJoinAndSelect('project.tasks', 'tasks')
       .where('project.id = :projectId', { projectId })
+      .select([
+        'project.name',
+        'project.description',
+        'project.createdAt',
+        'project.dueDate',
+        'project.completedAt',
+        'project.status',
+        'tasks.description',
+        'tasks.createdAt',
+        'tasks.dueDate',
+        'tasks.completedAt',
+        'tasks.status',
+      ])
       .getOne();
 
     return {
@@ -72,7 +94,7 @@ export class ProjectsService {
     // verify project due date
     const isDueDateValid = verifyDueDate(body.dueDate);
     if (!isDueDateValid) {
-      throw new BadRequestException('Invalid project due date!');
+      throw new ResponseException('Invalid project due date!');
     }
 
     const newProject = await this.projectRepository.save({
@@ -127,13 +149,13 @@ export class ProjectsService {
       relations: ['members'],
     });
     if (!project) {
-      throw new NotFoundException('Project not found!');
+      throw new ResponseException('Project not found!', HttpStatus.NOT_FOUND);
     }
 
     // verify project due date
     const isDueDateValid = verifyDueDate(body.dueDate);
     if (!isDueDateValid) {
-      throw new BadRequestException('Invalid project due date!');
+      throw new ResponseException('Invalid project due date!');
     }
 
     // update project
@@ -148,7 +170,7 @@ export class ProjectsService {
 
     // verify team manager
     if (userRole === Role.MANAGER && userId !== manager.id) {
-      throw new BadRequestException('Invalid manager!');
+      throw new ResponseException('Invalid manager!');
     }
 
     // update project members
@@ -206,7 +228,7 @@ export class ProjectsService {
       where: { id: projectId, status: ProjectStatus.TODO }, // only delete TODO projects
     });
     if (!project) {
-      throw new NotFoundException('Project not found!');
+      throw new ResponseException('Project not found!', HttpStatus.NOT_FOUND);
     }
 
     await project.softRemove();
@@ -229,11 +251,11 @@ export class ProjectsService {
   private async validateProjectMembers(teamMemberIds: string[]) {
     const { data: users } = await this.usersService.searchUsers(teamMemberIds);
     if (!users.length) {
-      throw new BadRequestException('A team must have at least one member!');
+      throw new ResponseException('A team must have at least one member!');
     }
     const teamManagers = users.filter((u) => u.role === Role.MANAGER);
     if (teamManagers.length !== 1) {
-      throw new BadRequestException('A team must have one manager!');
+      throw new ResponseException('A team must have one manager!');
     }
 
     return users;

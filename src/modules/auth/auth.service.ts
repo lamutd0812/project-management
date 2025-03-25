@@ -1,11 +1,14 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { UserRepository } from '../users/repositories/user.repository';
 import { CommonResponseDto } from '@common/dto/common-response.dto';
 import { JwtPayloadDto } from './dto/jwt-payload.dto';
-import { SignInDto } from './dto/sign-in.dto';
+import { LoginDto } from './dto/login.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { JwtService } from '@nestjs/jwt';
-import { SignInResponseDto } from './dto/sign-in-response.dto';
+import { LoginResponseDto } from './dto/login-response.dto';
+import * as bcrypt from 'bcrypt';
+import { Role } from '@common/enums/common.enum';
+import { ResponseException } from 'src/filters/exception-response';
 
 @Injectable()
 export class AuthService {
@@ -17,18 +20,53 @@ export class AuthService {
   private logger = new Logger('AuthService');
 
   async signUp(signUpDto: SignUpDto): Promise<CommonResponseDto> {
-    const username = await this.userRepository.signUp(signUpDto);
-    this.logger.log('>> user created: ', username);
+    const {
+      username,
+      password,
+      firstName,
+      lastName,
+      email,
+      address,
+      phoneNumber,
+    } = signUpDto;
+    const salt = await bcrypt.genSalt();
 
-    return {
-      message: 'Account created successfully.',
-    };
+    try {
+      const savedUser = await this.userRepository.save({
+        username,
+        password: await this.userRepository.hashPassword(password, salt),
+        firstName,
+        lastName,
+        email,
+        address,
+        phoneNumber,
+        salt,
+        role: Role.CONTRIBUTOR,
+      });
+      this.logger.log('>> user created: ', savedUser.username);
+
+      return {
+        message: 'Account created successfully.',
+      };
+    } catch (err) {
+      if (err.code === '23505') {
+        this.logger.error('Username or email already exists.');
+        throw new ResponseException('Username or email already exists.');
+      }
+      throw new ResponseException(
+        err.message,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  async signIn(signInDto: SignInDto): Promise<SignInResponseDto> {
-    const user = await this.userRepository.signIn(signInDto);
+  async login(body: LoginDto): Promise<LoginResponseDto> {
+    const user = await this.userRepository.findUserByUsernameAndPassword(body);
     if (!user) {
-      throw new UnauthorizedException('Username or password incorrect.');
+      throw new ResponseException(
+        'Username or password incorrect.',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     const {

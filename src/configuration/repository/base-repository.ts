@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { NotFoundException } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import * as _ from 'lodash';
 import { DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
 import { EntityTarget } from 'typeorm/common/EntityTarget';
@@ -7,6 +7,7 @@ import { ObjectLiteral } from 'typeorm/common/ObjectLiteral';
 import { LIMIT_GET_ALL } from '@common/constants/constant';
 import { NOT_FOUND } from '@common/constants/error-messages';
 import { SortType } from '@common/enums/common.enum';
+import { ResponseException } from 'src/filters/exception-response';
 
 export class BaseRepository<T extends ObjectLiteral> extends Repository<T> {
   constructor(entity: EntityTarget<T>, dataSource: DataSource) {
@@ -114,7 +115,7 @@ export class BaseRepository<T extends ObjectLiteral> extends Repository<T> {
 
   async findOneByIdValid(id: number | string): Promise<T | undefined> {
     const rs = await this.findOneByCondition({ id });
-    if (!rs) throw new NotFoundException(NOT_FOUND);
+    if (!rs) throw new ResponseException(NOT_FOUND, HttpStatus.NOT_FOUND);
     return rs;
   }
   async findListByCondition(

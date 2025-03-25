@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  HttpStatus,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import { envConfig } from '@configuration/env.config';
 import { Role } from '@common/enums/common.enum';
@@ -14,7 +8,10 @@ import { MoreThanOrEqual, Not } from 'typeorm';
 import { UpdateUserRoleDto } from './dto/update-user.dto';
 import { SearchUsersDto } from './dto/search-users.dto';
 import { Transactional } from 'typeorm-transactional';
-import { UserProfileResponseDto } from './dto/user-profile-response.dto';
+import {
+  UserDto,
+  UserProfileResponseDto,
+} from './dto/user-profile-response.dto';
 import { User } from './entities/user.entity';
 import { UpdateMyProfileDto } from './dto/update-my-profile.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -24,6 +21,7 @@ import { CompleteResetPasswordDto } from './dto/complete-reset-password.sto';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
 import { MailerService } from '../../mailer/mailer.service';
+import { ResponseException } from 'src/filters/exception-response';
 
 @Injectable()
 export class UsersService {
@@ -97,7 +95,7 @@ export class UsersService {
       where: { id: userId, role: Not(Role.ADMIN) },
     });
     if (!user) {
-      throw new NotFoundException('User not found!');
+      throw new ResponseException('User not found!', HttpStatus.NOT_FOUND);
     }
     user.role = role;
     await this.userRepository.save(user);
@@ -120,7 +118,7 @@ export class UsersService {
     return {
       statusCode: HttpStatus.OK,
       success: true,
-      data: user,
+      data: this.mapUserData(user),
     };
   }
 
@@ -137,7 +135,7 @@ export class UsersService {
       where: { email: body.email },
     });
     if (existedUser) {
-      throw new BadRequestException('Email already exists!');
+      throw new ResponseException('Email already exists!');
     }
 
     // update user infor
@@ -157,7 +155,7 @@ export class UsersService {
     return {
       statusCode: HttpStatus.OK,
       success: true,
-      data: updatedUser,
+      data: this.mapUserData(updatedUser),
     };
   }
 
@@ -170,7 +168,7 @@ export class UsersService {
       where: { email },
     });
     if (!user) {
-      throw new NotFoundException('Account not found!');
+      throw new ResponseException('Account not found!', HttpStatus.NOT_FOUND);
     }
 
     const currentTime = DayJS().utc();
@@ -179,7 +177,10 @@ export class UsersService {
       user.resetPwdExpTime &&
       currentTime.isBefore(DayJS(user.resetPwdExpTime))
     ) {
-      throw new NotFoundException('Reset password request already exists!');
+      throw new ResponseException(
+        'Reset password request already exists!',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     // generate OTP
@@ -223,7 +224,10 @@ export class UsersService {
       },
     });
     if (!user) {
-      throw new NotFoundException('Reset password request not found!');
+      throw new ResponseException(
+        'Reset password request not found!',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     // update user password
@@ -250,6 +254,18 @@ export class UsersService {
 
   findUserById(id: string) {
     return this.userRepository.findOne({ where: { id } });
+  }
+
+  mapUserData(user: User): UserDto {
+    return {
+      id: user.id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      address: user.address,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+    };
   }
 
   //#region helper

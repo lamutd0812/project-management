@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  HttpStatus,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { TaskRepository } from './repositories/task.repository';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { User } from '../users/entities/user.entity';
@@ -23,6 +18,7 @@ import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { ActivityLogCategory } from '../activity-logs/entities/activity-log.entity';
 import { MailerService } from '../../mailer/mailer.service';
 import { UsersService } from '../users/users.service';
+import { ResponseException } from 'src/filters/exception-response';
 
 @Injectable()
 export class TasksService {
@@ -156,27 +152,27 @@ export class TasksService {
       await this.projectsService.getProjectDetail(projectId);
 
     // verify project status
-    if (project.status === ProjectStatus.COMPLETED) {
-      throw new NotFoundException('Project not found!');
+    if (!project || project.status === ProjectStatus.COMPLETED) {
+      throw new ResponseException('Project not found!');
     }
     const { members } = project;
 
     // verify due date
     const isDueDateValid = verifyDueDate(dueDate);
     if (!isDueDateValid) {
-      throw new BadRequestException('Invalid task due date!');
+      throw new ResponseException('Invalid task due date!');
     }
 
     // verify team manager
     const teamMemberIds = members.map((m) => m.userId);
     const managerUserId = teamMemberIds.find((tmId) => tmId === userId);
     if (userRole === Role.MANAGER && !managerUserId) {
-      throw new NotFoundException('Project not found!');
+      throw new ResponseException('Project not found!', HttpStatus.NOT_FOUND);
     }
 
     // verify assignee
     if (!teamMemberIds.includes(assigneeId)) {
-      throw new BadRequestException('Invalid assignee!');
+      throw new ResponseException('Invalid assignee!');
     }
 
     // create task
@@ -234,7 +230,7 @@ export class TasksService {
       .getOne();
 
     if (!task) {
-      throw new NotFoundException('Task not found!');
+      throw new ResponseException('Task not found!', HttpStatus.NOT_FOUND);
     }
     const {
       status: currentStatus,
@@ -244,20 +240,20 @@ export class TasksService {
 
     // verify user permission
     if (userRole !== Role.ADMIN && userId !== currentassigneeId) {
-      throw new NotFoundException('Task not found!');
+      throw new ResponseException('Task not found!', HttpStatus.NOT_FOUND);
     }
 
     // verify assignee update
     const teamMemberIds = members.map((m) => m.userId);
     if (assigneeId && !teamMemberIds.includes(assigneeId)) {
-      throw new BadRequestException('Invalid assignee!');
+      throw new ResponseException('Invalid assignee!');
     }
 
     // verify due date update
     if (dueDate) {
       const isDueDateValid = verifyDueDate(dueDate);
       if (!isDueDateValid) {
-        throw new BadRequestException('Invalid task due date!');
+        throw new ResponseException('Invalid task due date!');
       }
     }
 
@@ -265,7 +261,7 @@ export class TasksService {
     if (status) {
       const isStatusValid = this.verifyTaskStatusUpdate(currentStatus, status);
       if (!isStatusValid) {
-        throw new BadRequestException('Invalid status update!');
+        throw new ResponseException('Invalid status update!');
       }
     }
 
@@ -310,13 +306,13 @@ export class TasksService {
 
     const task = await qb.getOne();
     if (!task) {
-      throw new NotFoundException('Task not found!');
+      throw new ResponseException('Task not found!', HttpStatus.NOT_FOUND);
     }
 
     // manager only can delete their tasks inside their project
     const teamMemberIds = task.project.members.map((m) => m.userId);
     if (userRole === Role.MANAGER && !teamMemberIds.includes(userId)) {
-      throw new NotFoundException('Task not found!');
+      throw new ResponseException('Task not found!', HttpStatus.NOT_FOUND);
     }
 
     await task.softRemove();

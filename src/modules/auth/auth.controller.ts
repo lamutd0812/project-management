@@ -2,8 +2,8 @@ import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CommonResponseDto } from '@common/dto/common-response.dto';
-import { SignInResponseDto } from './dto/sign-in-response.dto';
-import { SignInDto } from './dto/sign-in.dto';
+import { LoginResponseDto } from './dto/login-response.dto';
+import { LoginDto } from './dto/login.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 
 @Controller('auth')
@@ -23,10 +23,8 @@ export class AuthController {
 
   @Post('/login')
   @ApiOperation({ summary: 'Login' })
-  @ApiOkResponse({ type: SignInResponseDto })
-  signIn(
-    @Body(ValidationPipe) signInDto: SignInDto,
-  ): Promise<CommonResponseDto> {
-    return this.authService.signIn(signInDto);
+  @ApiOkResponse({ type: LoginResponseDto })
+  login(@Body(ValidationPipe) body: LoginDto): Promise<CommonResponseDto> {
+    return this.authService.login(body);
   }
 }

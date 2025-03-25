@@ -1,20 +1,15 @@
 import { HttpExceptionDto } from '@common/dto/http-exception.dto';
 import { DayJS } from '@common/utils/dayjs';
-import {
-  ArgumentsHost,
-  Catch,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, HttpException, Logger } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
 import { Request, Response } from 'express';
+import { ResponseException } from './exception-response';
 
 @Catch()
 export class AllExceptionsFilter extends BaseExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
-  catch(exception: HttpException, host: ArgumentsHost) {
+  catch(exception: HttpException | ResponseException, host: ArgumentsHost) {
     console.log(exception);
 
     const ctx = host.switchToHttp();
@@ -30,8 +25,8 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
       const { message: errMessage } = JSON.parse(exceptionString);
       message = errMessage;
     } else {
-      status = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = 'INTERNAL_SERVER_ERROR';
+      status = exception.status;
+      message = exception.message;
     }
 
     const timestamp = DayJS().utc().format();
